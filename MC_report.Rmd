@@ -1,0 +1,80 @@
+---
+title: "Monte Carlo Study"
+author: "Ming-Chen Lu (mingchlu@umich.edu)"
+date: "`r format.Date(Sys.Date(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: yes
+    code_folding: hide
+---
+## About
+The work is used to investigate resampling methods, in particular, bootstrap and jacknife procedure through Monte Carlo simlulation.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(root.dir = './Desktop/MonteCarlo', 
+                      echo = TRUE, results = 'asis', message = FALSE, 
+                      fig.height = 4)
+```
+
+## Methods
+Here describes the formulas of four confidence interval types and three quantities that are used to compare those CIs.
+
+1. **Types of Confidence Interval for $\hat{\theta}=\bar{x} / \bar{y}$**
+
+  - the jackknife estimate for the standard error:
+  
+  $$(\hat{\theta} + z_{\alpha / 2} \hat{\sigma}_{\mathrm{JACK}}, \hat{\theta} - z_{\alpha / 2} \hat{\sigma}_{\mathrm{JACK}})$$, 
+  where $\hat{\theta}_{(i)}=\frac{\bar{x}}{\bar{y}}$ means ommiting the ith cases and $\bar{\theta}=\frac{1}{n} \sum_{i=1}^{n} \hat{\theta}_{(i)}$.
+  
+  - the percentile method: 
+  
+  $$\left(\theta_{\alpha / 2}^{*}, \theta_{1-\alpha / 2}^{*}\right)$$
+  
+  - the basic bootstrap:
+  
+  $$\left(2 \hat{\theta}-\theta_{1-\alpha / 2}^{*}, 2 \hat{\theta}-\theta_{\alpha / 2}^{*}\right)$$
+  
+  - the normal approximation with bootstrap standard error:  
+  
+  $$\left(\hat{\theta}-z_{(1-\alpha / 2)} \hat{\sigma}^{*}, \hat{\theta}+z_{(1-\alpha / 2)} \hat{\sigma}^{*}\right)$$
+  
+2. **Three quantities**
+
+  - The coverage probability: the percentage of samples that contain the true value 
+  
+  $$\mathrm{E}[x] / \mathrm{E}[y]$$
+  
+  - The average length of the confidence intervals
+  
+  - The average shape of the confidence intervals defined as
+  
+  $$\frac{\hat{\theta}_{U}-\hat{\theta}}{\hat{\theta}-\hat{\theta}_{L}}$$
+
+\pagebreak
+
+## Analysis 
+
+Let $X~Poisson(\lambda = 4)$, $Y~Poisson(\lambda = 2)$ with smaple sizes $n_x = 30$ and $n_y = 30$. Then, I carried out the Monte Carlo study to estimate and compare each of the four 95% confidence interval types (the jackknife CI and 3 bootstrap CIs) defined in the functions.
+
+```{r analysis}
+source('MC.R')
+
+cn = c('measure', 'Coverage Probability', 'Average Length', 'Average Shape')
+caps = paste(
+  '*Confidence interval comparisons.* This table compares the quantities for ',
+  'each of the four 95% confidence interval types. ',
+  'The quantities being computed include the coverage probability, the average',
+  ' length and the average shape of the confidence intervals.'
+)
+
+result$measure = 
+  result$measure %>% 
+  recode(bs = 'basic bootstrap', 
+         qt = 'percentile', 
+         nbs = 'normal approx w/ bootstrap std error', 
+         jk = 'jackknife')
+
+knitr::kable(result, caption = caps, col.names = cn, align = 'c', digits = 4)
+```
+
+On behalf of the coverage probability, the jackknife CI and the normal approximation with bootstrap standard error seems to perfrom better since they include the true value roughly 95% of the time over replications. As of the average length of the CI, four measures perform similarly. And the last quantity, the average shape of the CI, the percentile method and the basic bootstrap tend to have unbalanced lengths on two sides of the point estimate.
